@@ -1,0 +1,42 @@
+import socket
+import threading
+import queue
+
+cola_puertos = queue.Queue()
+
+def escanear_puertos_worker():
+    while not cola_puertos.empty():
+        try:
+            host, puerto = cola_puertos.get_nowait()
+        except queue.Empty:
+            break
+            
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5) 
+            if s.connect_ex((host, puerto)) == 0:
+                print(f"[ABIERTO] {host} : {puerto}")
+        
+        cola_puertos.task_done()
+
+if __name__ == "__main__":
+    paginas = ["scanme.nmap.org", "testphp.vulnweb.com", "example.com", "google.com"]
+    
+    print("Llenando la cola")
+    for pagina in paginas:
+        for puerto in range(1, 10001):
+            cola_puertos.put((pagina, puerto))
+            
+    threads = []
+    NUM_HILOS = 200 
+    
+    print(f"Iniciando {NUM_HILOS} hilos de trabajo...\n")
+    
+    for _ in range(NUM_HILOS):
+        t = threading.Thread(target=escanear_puertos_worker)
+        t.start()
+        threads.append(t)
+        
+    for t in threads:
+        t.join()
+        
+    print("\nEscaneo terminado ")
