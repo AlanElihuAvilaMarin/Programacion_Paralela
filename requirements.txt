@@ -1,0 +1,7 @@
+scipy==1.17.0
+requests==2.32.5
+beautifulsoup4==4.14.3
+psycopg2-binary==2.9.9
+SQLAlchemy == 2.0.48
+pillow == 12.1.1
+numpy == 2.3.5
