@@ -1,6 +1,7 @@
 import threading
 import queue
 import time
+import multiprocessing
 import numpy as np
 
 cola_telemetria = queue.Queue()            
@@ -62,7 +63,52 @@ def calcular_bloque_mandelbrot_vectorizado(args):
     bloque_color = (iteraciones * 255 / max_iter).astype(np.uint8)
     return y_start, y_end, bloque_color
 
+class FractalApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Proyecto Paralela: Mandelbrot Vectorizado")
+        self.ancho = 800
+        self.alto = 600
+        self.x_min, self.x_max = -2.0, 0.5
+        self.y_min, self.y_max = -1.25, 1.25
+        self.max_iter = 150  
+        self.num_cores = multiprocessing.cpu_count()
+        
+        self.canvas = tk.Canvas(root, width=self.ancho, height=self.alto, bg="black")
+        self.canvas.pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+        self.status = ttk.Label(root, text="Iniciando motores optimizados...", font=("Arial", 11))
+        self.status.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=5)
+        
+        self.canvas.bind("<Button-1>", self.hacer_zoom_in)   
+        self.canvas.bind("<Button-3>", self.hacer_zoom_out)  
+        
+        self.hilo_logs = threading.Thread(target=consumidor_telemetria, daemon=True)
+        self.hilo_logs.start()
+        
+        self.renderizar_fractal()
 
+    def renderizar_fractal(self):
+        self.status.config(text=f"Calculando matricialmente con {self.num_cores} núcleos...")
+        self.root.update()
+        
+        clave_estado = (self.x_min, self.x_max, self.y_min, self.y_max, self.max_iter)
+        
+        if clave_estado in cache_fractales:
+            print("[Memoización] Vista recuperada instantáneamente.")
+            matriz_imagen = cache_fractales[clave_estado]
+            tiempo_total = 0.0
+        else:
+            matriz_imagen, tiempo_total = self.despachar_calculo_paralelo(clave_estado)
+            cache_fractales[clave_estado] = matriz_imagen
+
+        img_pil = Image.fromarray(matriz_imagen, mode='L')
+        self.img_tk = ImageTk.PhotoImage(img_pil.convert("RGB"))
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.img_tk)
+        
+        if tiempo_total > 0:
+            self.status.config(text=f"Renderizado en {tiempo_total:.4f}s usando Vectorización NumPy + Pool ({self.num_cores} cores).")
+        else:
+            self.status.config(text="Cargado instantáneamente desde la Caché (Memoización).")
 
 
 
