@@ -1,5 +1,6 @@
 import threading
 import queue
+import time
 
 cola_telemetria = queue.Queue()            
 lock_estadisticas = threading.Lock()       
@@ -21,6 +22,16 @@ def consumidor_telemetria():
             print(f"[Log Hilo] Render #{total} -> {mensaje}")
         
         cola_telemetria.task_done()
+
+
+def medir_rendimiento(func):
+    def wrapper(*args, **kwargs):
+        inicio = time.time()
+        resultado = func(*args, **kwargs)
+        tiempo_total = time.time() - inicio
+        cola_telemetria.put(f"Tiempo de cómputo: {tiempo_total:.4f} segundos")
+        return resultado, tiempo_total
+    return wrapper
 
 
 
