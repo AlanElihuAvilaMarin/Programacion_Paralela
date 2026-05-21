@@ -3,6 +3,10 @@ import queue
 import time
 import multiprocessing
 import numpy as np
+import threading
+import tkinter as tk
+from tkinter import ttk
+from PIL import Image, ImageTk
 
 cola_telemetria = queue.Queue()            
 lock_estadisticas = threading.Lock()       
@@ -109,6 +113,28 @@ class FractalApp:
             self.status.config(text=f"Renderizado en {tiempo_total:.4f}s usando Vectorización NumPy + Pool ({self.num_cores} cores).")
         else:
             self.status.config(text="Cargado instantáneamente desde la Caché (Memoización).")
+            @medir_rendimiento
+    def despachar_calculo_paralelo(self, clave_estado):
+        num_fragmentos = self.num_cores * 4  
+        filas_por_fragmento = self.alto // num_fragmentos
+        
+        tareas = list(map(
+            lambda i: (
+                i * filas_por_fragmento, 
+                (i + 1) * filas_por_fragmento if i != num_fragmentos - 1 else self.alto, 
+                self.ancho, self.alto, self.x_min, self.x_max, self.y_min, self.y_max, self.max_iter
+            ), 
+            range(num_fragmentos)
+        ))
+        
+        with multiprocessing.Pool(processes=self.num_cores) as pool:
+            resultados = pool.map(calcular_bloque_mandelbrot_vectorizado, tareas)
+            
+        matriz_imagen = np.zeros((self.alto, self.ancho), dtype=np.uint8)
+        for y_start, y_end, bloque in resultados:
+            matriz_imagen[y_start:y_end, :] = bloque
+            
+        return matriz_imagen
 
 
 
