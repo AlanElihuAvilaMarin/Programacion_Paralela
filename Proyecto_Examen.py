@@ -3,7 +3,6 @@ import queue
 import time
 import multiprocessing
 import numpy as np
-import threading
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
