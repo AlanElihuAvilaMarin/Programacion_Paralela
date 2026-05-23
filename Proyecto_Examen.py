@@ -3,6 +3,9 @@ import queue
 import time
 import multiprocessing
 import numpy as np
+import tkinter as tk
+from tkinter import ttk
+from PIL import Image, ImageTk
 
 cola_telemetria = queue.Queue()            
 lock_estadisticas = threading.Lock()       
@@ -109,6 +112,59 @@ class FractalApp:
             self.status.config(text=f"Renderizado en {tiempo_total:.4f}s usando Vectorización NumPy + Pool ({self.num_cores} cores).")
         else:
             self.status.config(text="Cargado instantáneamente desde la Caché (Memoización).")
+    @medir_rendimiento
+    def despachar_calculo_paralelo(self, clave_estado):
+        num_fragmentos = self.num_cores * 4  
+        filas_por_fragmento = self.alto // num_fragmentos
+        
+        tareas = list(map(
+            lambda i: (
+                i * filas_por_fragmento, 
+                (i + 1) * filas_por_fragmento if i != num_fragmentos - 1 else self.alto, 
+                self.ancho, self.alto, self.x_min, self.x_max, self.y_min, self.y_max, self.max_iter
+            ), 
+            range(num_fragmentos)
+        ))
+        
+        with multiprocessing.Pool(processes=self.num_cores) as pool:
+            resultados = pool.map(calcular_bloque_mandelbrot_vectorizado, tareas)
+            
+        matriz_imagen = np.zeros((self.alto, self.ancho), dtype=np.uint8)
+        for y_start, y_end, bloque in resultados:
+            matriz_imagen[y_start:y_end, :] = bloque
+            
+        return matriz_imagen
+    def aplicar_zoom(self, mouse_x, mouse_y, factor):
+        click_real = self.x_min + (mouse_x / self.ancho) * (self.x_max - self.x_min)
+        click_imag = self.y_min + (mouse_y / self.alto) * (self.y_max - self.y_min)
+        
+        nuevo_ancho_complejo = (self.x_max - self.x_min) * factor
+        nuevo_alto_complejo = (self.y_max - self.y_min) * factor
+        
+        self.x_min = click_real - nuevo_ancho_complejo / 2
+        self.x_max = click_real + nuevo_ancho_complejo / 2
+        self.y_min = click_imag - nuevo_alto_complejo / 2
+        self.y_max = click_imag + nuevo_alto_complejo / 2
+        
+        if factor < 1.0:
+            self.max_iter = int(self.max_iter * 1.15) 
+        else:
+            self.max_iter = max(150, int(self.max_iter / 1.15))
+            
+        self.renderizar_fractal()
+
+    def hacer_zoom_in(self, event):
+        self.aplicar_zoom(event.x, event.y, 0.5)
+
+    def hacer_zoom_out(self, event):
+        self.aplicar_zoom(event.x, event.y, 2.0)
+
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    root = tk.Tk()
+    app = FractalApp(root)
+    root.mainloop()
 
 
 
