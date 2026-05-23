@@ -86,7 +86,7 @@ axes[0, 0].axis("off")
 plt.colorbar(imagen_ndvi, ax=axes[0, 0])
 
 imagen_ndwi = axes[0, 1].imshow(ndwi, cmap="Blues", vmin=-1, vmax=1)
-axes[0, 1].set_title("NDWI - Agua")
+axes[0, 1].set_title("NDWI - Humedad")
 axes[0, 1].axis("off")
 plt.colorbar(imagen_ndwi, ax=axes[0, 1])
 
@@ -96,7 +96,7 @@ axes[1, 0].axis("off")
 plt.colorbar(imagen_ndbi, ax=axes[1, 0])
 
 imagen_nbr = axes[1, 1].imshow(nbr, cmap="hot", vmin=-1, vmax=1)
-axes[1, 1].set_title("NBR - Áreas quemadas")
+axes[1, 1].set_title("NBR - Riesgo de incendio")
 axes[1, 1].axis("off")
 plt.colorbar(imagen_nbr, ax=axes[1, 1])
 
