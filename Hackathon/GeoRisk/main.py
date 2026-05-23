@@ -11,16 +11,10 @@ from numba import njit, prange, set_num_threads
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# Si tus carpetas Forest, Highway, Industrial, etc. están directamente en "Clase final"
 CARPETA_ENTRADA = BASE_DIR
-
-# Si después las metes dentro de input, usa:
-# CARPETA_ENTRADA = BASE_DIR / "input"
 
 CARPETA_SALIDA = BASE_DIR / "resultados_indices"
 
-# Computadora: 4 núcleos físicos.
-# Usamos 2 procesos y 2 hilos por proceso para no saturar.
 MAX_WORKERS = 3
 NUMBA_THREADS = 3
 
@@ -44,7 +38,6 @@ def calcular_indices_pixel_por_pixel(blue, green, red, nir, swir1, swir2):
             s1 = swir1[i, j] / 10000.0
             s2 = swir2[i, j] / 10000.0
 
-            # Clipping: recortar valores anómalos
             if b < 0.0:
                 b = 0.0
             elif b > 1.0:
@@ -75,28 +68,24 @@ def calcular_indices_pixel_por_pixel(blue, green, red, nir, swir1, swir2):
             elif s2 > 1.0:
                 s2 = 1.0
 
-            # NDVI = (NIR - Red) / (NIR + Red)
             denominador = n + r
             if denominador == 0.0:
                 ndvi[i, j] = 0.0
             else:
                 ndvi[i, j] = (n - r) / denominador
 
-            # NDWI = (Green - NIR) / (Green + NIR)
             denominador = g + n
             if denominador == 0.0:
                 ndwi[i, j] = 0.0
             else:
                 ndwi[i, j] = (g - n) / denominador
 
-            # NDBI = (SWIR1 - NIR) / (SWIR1 + NIR)
             denominador = s1 + n
             if denominador == 0.0:
                 ndbi[i, j] = 0.0
             else:
                 ndbi[i, j] = (s1 - n) / denominador
 
-            # NBR = (NIR - SWIR2) / (NIR + SWIR2)
             denominador = n + s2
             if denominador == 0.0:
                 nbr[i, j] = 0.0
@@ -118,13 +107,6 @@ def procesar_imagen(ruta_imagen):
                 "Se necesitan al menos 12 bandas."
             )
 
-        # Bandas Sentinel-2:
-        # Banda 2  = Azul
-        # Banda 3  = Verde
-        # Banda 4  = Rojo
-        # Banda 8  = NIR
-        # Banda 11 = SWIR 1
-        # Banda 12 = SWIR 2
 
         blue = dataset.read(2).astype(np.float32)
         green = dataset.read(3).astype(np.float32)
