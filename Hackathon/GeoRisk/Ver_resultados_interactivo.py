@@ -74,7 +74,6 @@ def tecla_presionada(event):
         anterior(event)
 
 
-# Cargar primera imagen
 ndvi, ndwi, ndbi, nbr = cargar_indices(archivos[indice_actual])
 
 fig, axes = plt.subplots(2, 2, figsize=(12, 8))
@@ -102,7 +101,6 @@ axes[1, 1].axis("off")
 plt.colorbar(imagen_nbr, ax=axes[1, 1])
 
 
-# Botones en la parte inferior
 ax_anterior = plt.axes([0.30, 0.05, 0.15, 0.06])
 ax_siguiente = plt.axes([0.55, 0.05, 0.15, 0.06])
 
@@ -112,7 +110,6 @@ boton_siguiente = Button(ax_siguiente, "Siguiente")
 boton_anterior.on_clicked(anterior)
 boton_siguiente.on_clicked(siguiente)
 
-# También permite usar flechas del teclado
 fig.canvas.mpl_connect("key_press_event", tecla_presionada)
 
 actualizar_figura()
